@@ -2,6 +2,10 @@
 .idea
 .vscode
 
+# Sensitive files
+.env
+firebase-credentials.json
+
 /tmp
 /out-tsc
 
