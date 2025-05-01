@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
+    "firebase-admin": "^13.3.0",
     "mongodb": "^6.16.0",
     "slugify": "^1.6.6"
   },
