@@ -1,24 +1,39 @@
 import express from "express";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import slugify from "slugify";
+import { Db, MongoClient, ServerApiVersion } from "mongodb";
+import type Post from "./types/post";
 
 const app = express();
+app.use(express.json());
 
-const uri = "mongodb://localhost:27017";
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+let db: Db;
+
+async function connectToDatabase() {
+  const uri = "mongodb://localhost:27017";
+  const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    }
+  });
+
+  await client.connect();
+  db = client.db("BlogDB");
+}
+
+async function main() {
+  await connectToDatabase();
+  app.listen(3000, () => {
+    console.log("Server is running on port 3000");
+  });
+}
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
 app.get("/api/posts", async (req, res) => {
-  await client.connect();
-  const db = client.db("BlogDB");
   const posts = await db.collection("posts").find().toArray();
   res.json(posts);
 });
@@ -26,9 +41,6 @@ app.get("/api/posts", async (req, res) => {
 app.get("/api/posts/:slug", async (req, res) => {
   const { slug } = req.params;
 
-  await client.connect();
-  const db = client.db("BlogDB");
-
   const post = await db.collection("posts").findOne({ slug });
   if (!post) {
     res.status(404).send("post not found");
@@ -38,53 +50,72 @@ app.get("/api/posts/:slug", async (req, res) => {
   res.json(post);
 });
 
-app.post("/api/posts", (req, res) => {
+app.post("/api/posts", async (req, res) => {
   const { title, content } = req.body;
-  res.send(req.body);
+  if (!title || !content) {
+    res.status(400).send("title and content are required");
+    return;
+  }
+
+  const post: Post = {
+    title,
+    content,
+    slug: slugify(title, { lower: true }),
+    upvotes: 0,
+    comments: []
+  }
+
+  const createdPost = await db.collection("posts").insertOne(post);
+  if (!createdPost) {
+    res.status(500).send("error creating post");
+    return;
+  }
+
+  res.json(post);
 });
 
 app.post("/api/posts/:slug/upvote", async (req, res) => {
   const { slug } = req.params;
 
-  await client.connect();
-  const db = client.db("BlogDB");
+  const updatedPost = await db
+    .collection("posts")
+    .findOneAndUpdate(
+      { slug },
+      { $inc: { upvotes: 1 }, },
+      { returnDocument: "after" }
+    )
 
-  const post = await db.collection("posts").findOne({ slug });
-  if (!post) {
+  if (!updatedPost) {
     res.status(404).send("post not found");
     return
   }
 
-  post.upvotes += 1;
-  await db.collection("posts").updateOne({ slug }, { $set: post });
-
-  res.json(post);
+  res.json(updatedPost);
 });
 
 app.post("/api/posts/:slug/comments", async (req, res) => {
   const { slug } = req.params;
+  const { postedBy, text } = req.body;
 
-  await client.connect();
-  const db = client.db("BlogDB");
+  if (!postedBy || !text) {
+    res.status(400).send("postedBy and text are required");
+    return;
+  }
+  const comment = { postedBy, text };
 
-  const post = await db.collection("posts").findOne({ slug });
-  if (!post) {
+  const updatedPost = await db.collection("posts").findOneAndUpdate(
+    { slug },
+    // @ts-ignore - MongoDB $push operator type definition issue
+    { $push: { comments: { $each: [comment] } } },
+    { returnDocument: "after" }
+  )
+
+  if (!updatedPost) {
     res.status(404).send("post not found");
     return
   }
 
-  const { comment } = req.body;
-  if (!comment) {
-    res.status(400).send("comment is required");
-    return;
-  }
-
-  await db.collection("posts").updateOne({ slug }, { $push: { comments: comment } });
-
-  post.comments.push(comment);
-  res.json(post);
+  res.json(updatedPost);
 });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-});
+main();
