@@ -1,7 +1,18 @@
 import express from "express";
+import dotenv from "dotenv";
+import admin from "firebase-admin";
 import slugify from "slugify";
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
 import type Post from "./types/post";
+import fs from "fs";
+
+dotenv.config();
+
+const firebaseCredentials = JSON.parse(fs.readFileSync("./firebase-credentials.json", "utf8"));
+admin.initializeApp({
+  credential: admin.credential.cert(firebaseCredentials),
+  databaseURL: process.env.FIREBASE_DATABASE_URL,
+});
 
 const app = express();
 app.use(express.json());
