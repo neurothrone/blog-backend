@@ -1,0 +1,31 @@
+@HostAddress = http://localhost:3000
+
+### Create Post
+POST {{HostAddress}}/api/posts
+Content-Type: application/json
+
+{
+  "title": "Once upon a time",
+  "content": "And there was a bird"
+}
+
+### Get all Posts
+GET {{HostAddress}}/api/posts
+
+
+### Get Post by Slug
+GET {{HostAddress}}/api/posts/getting-started-with-react
+
+
+### Upvote Post
+POST {{HostAddress}}/api/posts/getting-started-with-react/upvote
+
+
+### Comment Post
+POST {{HostAddress}}/api/posts/getting-started-with-react/comments
+Content-Type: application/json
+
+{
+  "postedBy": "Zane",
+  "text": "Excellent!"
+}
