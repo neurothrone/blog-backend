@@ -61,6 +61,17 @@ app.get("/api/posts/:slug", async (req, res) => {
   res.json(post);
 });
 
+app.use(async function (req, res, next) {
+  const token = req.headers.authorization;
+
+  if (token) {
+    req.user = await admin.auth().verifyIdToken(token);
+    next();
+  } else {
+    res.sendStatus(400);
+  }
+});
+
 app.post("/api/posts", async (req, res) => {
   const { title, content } = req.body;
   if (!title || !content) {
@@ -73,6 +84,7 @@ app.post("/api/posts", async (req, res) => {
     content,
     slug: slugify(title, { lower: true }),
     upvotes: 0,
+    upvoteIds: [],
     comments: []
   }
 
@@ -86,18 +98,41 @@ app.post("/api/posts", async (req, res) => {
 });
 
 app.post("/api/posts/:slug/upvote", async (req, res) => {
+  if (!req.user) {
+    res.status(401).send("unauthorized");
+    return;
+  }
+
   const { slug } = req.params;
+  const { uid } = req.user;
+
+  const post = await db.collection("posts").findOne({ slug });
+  if (!post) {
+    res.status(404).send("post not found");
+    return;
+  }
+
+  const upvoteIds = post.upvoteIds || [];
+  const canUpvote = uid && !upvoteIds.includes(uid);
+  if (!canUpvote) {
+    res.status(403).send("user not authorized to upvote");
+    return;
+  }
 
   const updatedPost = await db
     .collection("posts")
     .findOneAndUpdate(
       { slug },
-      { $inc: { upvotes: 1 }, },
+      {
+        $inc: { upvotes: 1 },
+        // @ts-ignore - MongoDB $push operator type definition issue
+        $push: { upvoteIds: uid }
+      },
       { returnDocument: "after" }
     )
 
   if (!updatedPost) {
-    res.status(404).send("post not found");
+    res.status(400).send("error upvoting post");
     return
   }
 
