@@ -4,6 +4,7 @@
     "title": "Getting Started with React",
     "content": "React is a popular JavaScript library for building user interfaces. In this post, we'll explore the basics of React and how to create your first component.",
     "upvotes": 0,
+    "upvoteIds": [],
     "comments": []
   },
   {
@@ -11,6 +12,7 @@
     "title": "TypeScript Best Practices in 2024",
     "content": "TypeScript adds static typing to JavaScript, making it more robust and maintainable. Learn about the most important TypeScript practices that will improve your code quality.",
     "upvotes": 0,
+    "upvoteIds": [],
     "comments": []
   },
   {
@@ -18,6 +20,7 @@
     "title": "Modern Web Development Techniques",
     "content": "Explore the latest trends and techniques in web development, including responsive design, progressive web apps, and modern JavaScript frameworks.",
     "upvotes": 0,
+    "upvoteIds": [],
     "comments": []
   },
   {
@@ -25,6 +28,7 @@
     "title": "Mastering React Hooks",
     "content": "Deep dive into React Hooks, understanding useState, useEffect, and custom hooks. Learn how to manage state and side effects in functional components effectively.",
     "upvotes": 0,
+    "upvoteIds": [],
     "comments": []
   },
   {
@@ -32,6 +36,7 @@
     "title": "Web Performance Optimization Tips",
     "content": "Discover essential techniques for optimizing web application performance, including code splitting, lazy loading, and caching strategies.",
     "upvotes": 0,
+    "upvoteIds": [],
     "comments": []
   }
 ]

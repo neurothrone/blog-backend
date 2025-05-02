@@ -5,6 +5,7 @@ type Post = {
   title: string;
   content: string;
   upvotes: number;
+  upvoteIds: string[];
   comments: Comment[]
 };
 
